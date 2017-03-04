@@ -1,29 +1,42 @@
 FROM ubuntu:16.04
 MAINTAINER monos <jeseon@gmail.com>
 
-# Update apt repository to daumkakao mirror's of korea
+# Refer. http://stackoverflow.com/questions/22466255
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Update APT repository
 RUN sed -i 's/archive.ubuntu.com/ftp.daumkakao.com/g' /etc/apt/sources.list
 
 # Install related packages and set LLVM 3.6 as the compiler
-RUN apt-get -q update && \
-    apt-get -q install -y \
-    make \
-    libc6-dev \
-    clang-3.6 \
-    curl \
-    wget \
-    libedit-dev \
-    python2.7 \
-    python2.7-dev \
-    libicu-dev \
-    rsync \
-    libxml2 \
-    git \
-    libcurl4-openssl-dev \
-    git-flow \
-    vim \
-    zip \
-    unzip \
+RUN apt-get -q update \
+    && apt-get -q install -y \
+        gcc \
+        make \
+        curl \
+        wget \
+        vim \
+        zip \
+        unzip \
+        rsync \
+        git \
+        git-flow \
+        clang-3.6 \
+        python2.7 \
+        python2.7-dev \
+        build-essential \
+        xz-utils \
+        libxml2 \
+        libc6-dev \
+        libedit-dev \
+        libicu-dev \
+        libssl-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        libcurl4-openssl-dev \
+        zlib1g-dev \
     && update-alternatives --quiet --install /usr/bin/clang clang /usr/bin/clang-3.6 100 \
     && update-alternatives --quiet --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.6 100 \
     && rm -r /var/lib/apt/lists/*
@@ -36,8 +49,8 @@ ENV SWIFT_BRANCH=swift-3.0.2-release \
 
 # Download GPG keys, signature and Swift package, then unpack and cleanup
 RUN SWIFT_URL=https://swift.org/builds/$SWIFT_BRANCH/$(echo "$SWIFT_PLATFORM" | tr -d .)/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM.tar.gz \
-    && curl -fsSL $SWIFT_URL -o swift.tar.gz \
-    && curl -fsSL $SWIFT_URL.sig -o swift.tar.gz.sig \
+    && curl -fSsL $SWIFT_URL -o swift.tar.gz \
+    && curl -fSsL $SWIFT_URL.sig -o swift.tar.gz.sig \
     && export GNUPGHOME="$(mktemp -d)" \
     && set -e; \
         for key in \
@@ -63,6 +76,14 @@ RUN SWIFT_URL=https://swift.org/builds/$SWIFT_BRANCH/$(echo "$SWIFT_PLATFORM" | 
 # Print Installed Swift Version
 RUN swift --version
 
-# Installing Java with SDKMAN
+# Install PyEnv and Python v3.6.0
+RUN curl -fsSL https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash \
+    && export PATH="$HOME/.pyenv/bin:$PATH" \
+    && eval "$(pyenv init -)" \
+    && eval "$(pyenv virtualenv-init -)" \
+    && pyenv install 3.6.0 \
+    && pyenv global 3.6.0
+
+# Install SDKMAN, Java, Scala and Kotlin
 RUN curl -fsSL https://get.sdkman.io | bash \
-    && bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install java"
+    && bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install java && sdk install sbt && sdk install scala && sdk install kotlin && sdk install leiningen"
