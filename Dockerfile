@@ -9,11 +9,12 @@ RUN sed -i 's/archive.ubuntu.com/ftp.daumkakao.com/g' /etc/apt/sources.list
 
 # Install related packages and set LLVM 3.6 as the compiler
 RUN apt-get -q update \
-    && apt-get -q install -y \
+ && apt-get -q install -y \
         gcc \
         make \
         curl \
         wget \
+        htop \
         vim \
         zip \
         unzip \
@@ -37,9 +38,9 @@ RUN apt-get -q update \
         libncursesw5-dev \
         libcurl4-openssl-dev \
         zlib1g-dev \
-    && update-alternatives --quiet --install /usr/bin/clang clang /usr/bin/clang-3.6 100 \
-    && update-alternatives --quiet --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.6 100 \
-    && rm -r /var/lib/apt/lists/*
+ && update-alternatives --quiet --install /usr/bin/clang clang /usr/bin/clang-3.6 100 \
+ && update-alternatives --quiet --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.6 100 \
+ && rm -r /var/lib/apt/lists/*
 
 # Everything up to here should cache nicely between Swift versions, assuming dev dependencies change little
 ENV SWIFT_BRANCH=swift-3.0.2-release \
@@ -49,10 +50,10 @@ ENV SWIFT_BRANCH=swift-3.0.2-release \
 
 # Download GPG keys, signature and Swift package, then unpack and cleanup
 RUN SWIFT_URL=https://swift.org/builds/$SWIFT_BRANCH/$(echo "$SWIFT_PLATFORM" | tr -d .)/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM.tar.gz \
-    && curl -fSsL $SWIFT_URL -o swift.tar.gz \
-    && curl -fSsL $SWIFT_URL.sig -o swift.tar.gz.sig \
-    && export GNUPGHOME="$(mktemp -d)" \
-    && set -e; \
+ && curl -fsSL $SWIFT_URL -o swift.tar.gz \
+ && curl -fsSL $SWIFT_URL.sig -o swift.tar.gz.sig \
+ && export GNUPGHOME="$(mktemp -d)" \
+ && set -e; \
         for key in \
       # pub   4096R/412B37AD 2015-11-19 [expires: 2017-11-18]
       #       Key fingerprint = 7463 A81A 4B2E EA1B 551F  FBCF D441 C977 412B 37AD
@@ -69,21 +70,23 @@ RUN SWIFT_URL=https://swift.org/builds/$SWIFT_BRANCH/$(echo "$SWIFT_PLATFORM" | 
         ; do \
           gpg --quiet --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
         done \
-    && gpg --batch --verify --quiet swift.tar.gz.sig swift.tar.gz \
-    && tar -xzf swift.tar.gz --directory / --strip-components=1 \
-    && rm -r "$GNUPGHOME" swift.tar.gz.sig swift.tar.gz
+ && gpg --batch --verify --quiet swift.tar.gz.sig swift.tar.gz \
+ && tar -xzf swift.tar.gz --directory / --strip-components=1 \
+ && rm -r "$GNUPGHOME" swift.tar.gz.sig swift.tar.gz
 
 # Print Installed Swift Version
 RUN swift --version
 
 # Install PyEnv and Python v3.6.0
 RUN curl -fsSL https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash \
-    && export PATH="$HOME/.pyenv/bin:$PATH" \
-    && eval "$(pyenv init -)" \
-    && eval "$(pyenv virtualenv-init -)" \
-    && pyenv install 3.6.0 \
-    && pyenv global 3.6.0
+ && echo '' >> "$HOME/.bashrc" \
+ && echo '# PyEnv Environment' >> "$HOME/.bashrc" \
+ && echo 'export PATH="$PATH:$HOME/.pyenv/bin"' >> "$HOME/.bashrc" \
+ && echo 'eval "$(pyenv init -)"' >> "$HOME/.bashrc" \
+ && echo 'eval "$(pyenv virtualenv-init -)"' >> "$HOME/.bashrc" \
+ && $HOME/.pyenv/bin/pyenv install 3.6.0 \
+ && $HOME/.pyenv/bin/pyenv global 3.6.0
 
-# Install SDKMAN, Java, Scala and Kotlin
+# Installing Java with SDKMAN
 RUN curl -fsSL https://get.sdkman.io | bash \
-    && bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install java && sdk install sbt && sdk install scala && sdk install kotlin && sdk install leiningen"
+ && bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install java"
