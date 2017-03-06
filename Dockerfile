@@ -10,17 +10,18 @@ RUN sed -i 's/archive.ubuntu.com/ftp.daumkakao.com/g' /etc/apt/sources.list
 # Install related packages and set LLVM 3.6 as the compiler
 RUN apt-get -q update \
  && apt-get -q install -y \
-        gcc \
-        make \
         curl \
         wget \
         htop \
+        tmux \
         vim \
+        git \
+        git-flow \
+        gcc \
+        make \
         zip \
         unzip \
         rsync \
-        git \
-        git-flow \
         clang-3.6 \
         python2.7 \
         python2.7-dev \
