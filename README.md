@@ -1,9 +1,14 @@
-# LangDev is a Dockerfile
+# LangDev is a Dockerfile (with Kakao)
 
-## Lists of languages
- - swift 3.0.2
- - java 8u121
- - python 3.6
+## List of languages
+ - Swift 4.1.1
+ - Java 1.8.0
+ - Python 3.6.5
+
+## Build
+```sh
+docker build -t monos/langdev .
+```
 
 ## Create a Container from the Image and Attach It
 ```sh
